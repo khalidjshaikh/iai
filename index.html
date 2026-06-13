@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+  <style>
+    #mars-canvas {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: -1;
+    }
+    body {
+      font-family: Avenir, sans-serif; font-size: x-large;
+        margin-left: 50px; color: white;
+    }
+    a {
+      text-decoration: none;
+      font-family: Avenir;
+      color: white;
+    }
+    h1, hr {
+        padding:0px; margin:0px;
+        box-sizing: border-box;
+        font-size: 64px;
+        font-weight: normal;
+        font-family: Avenir;
+    }
+    div {
+        font-size: 14px;
+        padding:0px; margin:0px;
+        font-family: Arial;
+        font-weight: bold;
+        text-transform: uppercase;
+    }
+    ul {
+        padding-top:0px; margin-top:0px
+    }
+    div#wasm {
+      margin-left:
+    }
+  </style>
+  <script>
+      // WASM
+      fetch('fib.wasm')
+      .then(response => response.arrayBuffer())
+      .then(bytes => WebAssembly.instantiate(bytes, { imports: {} }))
+      .then(results => {
+          window.fib = results.instance.exports.fib;
+          console.log('WASM loaded. You can now call fib(n).');
+      })
+      .catch(err => console.error('Failed to load WASM:', err));
+  </script>
+  <script>
+      // UI
+      let count = 0;
+      const increment = () => {
+        count++;
+        document.getElementById("number").textContent = count;
+        document.getElementById("fib").textContent = fib(count);
+        console.log(fib(count))
+      };
+      const decrement = () => {
+        count--;
+        if(count < 0) count = 0;
+        document.getElementById("number").textContent = count;
+        document.getElementById("fib").textContent = fib(count);
+        console.log(fib(count))
+      };
+    </script>
+</head>
+<body>
+<canvas id="mars-canvas"></canvas>
+<script>
+(function(){
+  const c = document.getElementById('mars-canvas');
+  const ctx = c.getContext('2d');
+  function resize(){ c.width = window.innerWidth; c.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+  const cx = () => c.width - r() +80, cy = () => c.height/2;
+  const r = () => Math.min(c.width, c.height) / 2 * 0.9;
+  let t = 0;
+  function draw(){
+    const w = c.width, h = c.height;
+    const x = cx(), y = cy(), scale = r() / 300;
+    ctx.clearRect(0, 0, w, h);
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
+    // Sun
+    ctx.beginPath(); ctx.arc(x, y, 20*scale, 0, Math.PI*2);
+    ctx.fillStyle = '#FFD700'; ctx.fill();
+    // Orbits
+    ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+    ctx.beginPath(); ctx.arc(x, y, 120*scale, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(x, y, 190*scale, 0, Math.PI*2); ctx.stroke();
+    // Earth
+    const ex = x + 120*scale*Math.cos(t), ey = y + 120*scale*Math.sin(t);
+    ctx.beginPath(); ctx.arc(ex, ey, 8*scale, 0, Math.PI*2);
+    ctx.fillStyle = '#4FA3E0'; ctx.fill();
+    // Mars
+    const mx = x + 190*scale*Math.cos(t*0.531), my = y + 190*scale*Math.sin(t*0.531);
+    ctx.beginPath(); ctx.arc(mx, my, 6*scale, 0, Math.PI*2);
+    ctx.fillStyle = '#C1440E'; ctx.fill();
+    // Labels
+    ctx.fillStyle = '#fff'; ctx.font = (12*scale)+'px sans-serif';
+    ctx.fillText('Earth', ex+10*scale, ey);
+    ctx.fillText('Mars', mx+8*scale, my);
+    t += 0.01;
+    requestAnimationFrame(draw);
+  }
+  draw();
+})();
+</script>
+    <h1>iAI</h1>
+    <div>
+	<a href="bitcoin:bc1qukzzrcna263n5k2xpxjlg8q73lk489sd859mgk">
+	  ₿ bc1qukzzrcna263n5k2xpxjlg8q73lk489sd859mgk<br/>
+        </a>
+	21200339 BOA 381047909537<br/>
+	2201 Rockbrook Drive, Suite 1513, Lewisville, TX 75067
+        <a href="https://www.linkedin.com/in/khalid-shaikh-793aa926/">
+            LinkedIn
+        </a>
+        <a href="sms://4697920081">
+            TXT
+        </a>
+        <a href="https://wa.me/4697920081">
+            WA
+        </a>
+        <a href="https://t.me/khalidjshaikh">
+            TG
+        </a>
+        <a href="tel:4697920081">
+            469 792 0081
+        </a>
+        <a href="mailto:k@iai.lol">
+            k@iai.lol
+        </a>
+	<br/>
+    </div>
+    <hr/>
+    AI Build | AI Transport | AI Culinary | AI CG | AI CG RT | AI Phlebotomy<br/>
+    AI, LLM, GenAI, Robotics, Autonomous Driving, Space.<br/>
+    <div id="wasm">
+      <br/>
+      WebAssembly (wasm) Fibonacci:&nbsp;
+      <button onclick="decrement()">-</button>
+      <span id="number">0</span>
+      <button onclick="increment()">+</button>
+      =
+      <span id="fib">1</span>
+      <br/>
+      <br/>
+    </div>
+    <ul>
+    <li>Ubuntu 26.04 LTS: Linux 7.0.0-1006-aws #6-Ubuntu SMP PREEMPT Tue May 26 12:04:34 UTC 2026 x86_64 GNU/Linux </li>
+    <li>Intel(R) Xeon(R) Platinum 8259CL CPU @ 2.50GHz</li>
+    <li>IBM Red Hat OpenShift, RHEL.</li>
+    <li>Apple Mac, iPhone, iPad, Airtag family of products, Swift, Objective-C, Xcode.</li>
+    <li>Meta family of products, Torch.</li>
+    <li>Alphabet Google Kubernetes, Android, GCP, Google AI Studio, TensorFlow, TPU, Go</li>
+    <li>Microsoft Windows and Visual Studio 2026, Azure, Copilot+. Qualcomm SnapDragon X, C#</li>
+    <li>Amazon Web Services.</li>
+    <li>Nvidia RTX or DGX Systems CUDA peta op processors.</li>
+    <li>AMD ROCm, 5GHz+, peta op processors.</li>
+    <li>SpaceX Starship (5 uncrewed Starships to Mars in 2026).</li>
+    <li>Intel.</li>
+    <li>ARM.</li>
+    <li>Broadcom, 100gbps per port.</li>
+    <li>TSMC.</li>
+    <li>ASML.</li>
+    <li>Oracle, OCI, Oracle Database 23ai, Java.</li>
+    <li>OpenAI, ChatGPT, AI software.</li>
+    <li>Claude.</li>
+    <li>Qualcomm, advanced 5G, 6G in 2030, terabit speeds.</li>
+    <li>AT&T Bell Labs: C, C++</li>
+    <li>Dell</li>
+    <li>Lenovo</li>
+    <li>ASUS</li>
+    <li>Acer</li>
+    <li>Samsung</li>
+    <li>Toshiba</li>
+    <li>Sony</li>
+    <li>Motorola</li>
+    <li>Cisco</li>
+  </ul>
+  Languages
+  <ul>
+    <li>Python</LI>
+    <li>JavaScript</LI>
+    <li>TypeScript</LI>
+    <li>Java</li>
+    <li>C#</li>
+    <li>C++</li>
+    <li>C</li>
+    <li>Assembler</li>
+    <li>Go</li>
+    <li>Rust</li>
+    <li>Julia</li>
+    <li>Ruby</li>
+    <li>TypeScript</li>
+    <li>SQL</li>
+    <li>Kotlin</li>
+    <li>Swift</li>
+    <li>Objective-C</li>
+    <li>Haskell</li>
+</ul>
+Operating Systems
+<ul>
+    <li>Windows</li>
+    <li>macOS</li>
+    <li>RHEL</li>
+    <li>Ubuntu</li>
+    <li>Debian</li>
+    <li>Android</li>
+    <li>iOS</li>
+    <li>iPadOS</li>
+    <li>Alpine</li>
+    <li>Linux</li>
+</ul>
+Processors
+<ul>
+    <li>x86-64</li>
+    <li>Arm64</li>
+    <li>RISC-V 64</li>
+</ul>
+Processors Tiles
+<ul>
+    <li>CPU</li>
+    <li>GPU</li>
+    <li>NPU</li>
+</ul>
+Processor Software
+<ul>
+    <li>All langauges</li>
+    <li>OpenGL</li>
+    <li>OpenCL</li>
+    <li>Vulkan</li>
+    <li>Metal</li>
+    <li>ONNX</li>
+</ul>
+Databases
+<ul>
+    <li>Oracle Database 23ai</li>
+    <li>Microsoft SQL</li>
+    <li>MySQL</li>
+    <li>MariaDB</li>
+    <li>PostgreSQL</li>
+    <li>Sqlite3</li>
+    <li>MongoDB</li>
+</ul>
+</html>
+Board Interfaces
+<ul>
+    <li>M.2</li>
+    <li>PCIe</li>
+    <li>HDMI</li>
+    <li>Display Port</li>
+    <li>USB C (PD)</li>
+    <li>eMMC</li>
+    <li>microSD</li>
+    <li>RJ45</li>
+    <li>GBIC</li>
+    <li>SFP</li>
+    <li>SSD</li>
+</ul>
+WiFI
+<ul>
+    <li>WiFi 6</li>
+    <li>WiFi 7 (802.11be, Intel)</li>
+</ul>
+Cellular
+<ul>
+    <li>5G</li>
+    <li>4G LTE</li>
+    <li>eSIM</li>
+</ul>
+Software Libraries
+<ul>
+    <li>Python: NumPy, Pandas, Matplotlib, Seaborn, Scikit-learn, TensorFlow, PyTorch, Keras, Flask, Django, OpenCV</li>
+</ul>
+Package managers
+<ul>
+    <li>Python: PIP</li>
+    <li>Java: Maven, Gradle</li>
+    <li>.NET: NuGet</li>
+    <li>C++: Conan</li>
+    <li>C: Conan</li>
+</ul>
+CI/CD
+<ul>
+    <li>Jenkins</li>
+    <li>GitHub Actions</li>
+    <li>Gitlab</li>
+    <li>Azure DevOps</li>
+    <li>AWS CodePipeline</li>
+    <li>GCP CI/CD</li>
+    <li>ArgoCD</li>
+    <li>TeamCity</li>
+    <li>Bamboo</li>
+    <li>CircleCI</li>
+    <li>Travis CI</li>
+    <li>Concourse</li>
+    <li>Rio</li>
+    <li>Spinnaker</li>
+</ul>
+Kubernetes
+<ul>
+    <li>EKS</li>
+    <li>GKE</li>
+    <li>AKS</li>
+    <li>Docker</li>
+    <li>VFKit</li>
+    <li>OpenShift</li>
+    <li>Windows Worker</li>
+</ul>
+IaC
+<ul>
+    <li>Terraform</li>
+    <li>Pulumi</li>
+    <li>CloudFormation</li>
+</ul>
+Configuration Management
+<ul>
+    <li>Ansible</li>
+    <li>Chef</li>
+    <li>Puppet</li>
+</ul>
+Shells
+<ul>
+    <li>PowerShell</li>
+    <li>Bash</li>
+</ul>
+Application Lifecycle Management (ALM)
+<ul>
+    <li>Jira</li>
+    <li>GitHub Projects</li>
+    <li>Azure DevOps</li>
+    <li>IBM Rational</li>
+    <li>Rally Software</li>
+</ul>
+User Interface Libraries
+<ul>
+    <li>JavaScript: Angular, React.js<a href=https://en.wikipedia.org/wiki/List_of_JavaScript_libraries>.</a></li>
+</ul>
+Web Technologies
+<ul>
+    <li>WebGL (Web Graphics Library)</li>
+    <li>WebNN (Web Neural Network API)</li>
+    <li>WebXR (Web eXtended Reality API)</li>
+</ul>
+Extended Reality
+<ul>
+    <li>Augmented Reality (AR)</li>
+    <li>Virtual Reality (VR)</li>
+    <li>Mixed Reality (MR)</li>
+</ul>
+Boards
+<ul>
+    <li>Raspberry Pi 1, 2, 3, 4, Zero W</li>
+    <li>Arduino Nano, Arduino Uno</li>
+    <li>Radxa Zero 3W, Rock 3C </li>
+    <li>VisionFive 2</li>
+</ul>
+NPU
+<ul>
+    <li>Apple M1 with ANE (NPU)</li>
+    <li>Qualcomm Snapdragon X Plus with NPU</li>
+    <li>Rockchip RK3566 with NPU</li>
+    <li>Ryzen 7840HS with NPU</li>
+    <li>Tesla Model 3 HW3 with NPU</li>
+</ul>
+
+<div style="text-align: center">
+    2026 © iAI
+</div>
+<p/>
+<a href='mailto:k@assembler.bond'>k@assembler.bond</a> <a href='mailto:k@awscloud.mom'>k@awscloud.mom</a> <a href='mailto:k@azure.boats'>k@azure.boats</a> <a href='mailto:k@cicd.lol'>k@cicd.lol</a> <a href='mailto:k@csharp.bond'>k@csharp.bond</a> <a href='mailto:k@devops.rest'>k@devops.rest</a> <a href='mailto:k@gcp.mom'>k@gcp.mom</a> <a href='mailto:k@golang.bond'>k@golang.bond</a>  <a href='mailto:k@iai.lol'>k@iai.lol</a> <a href='mailto:k@ipython.site'>k@ipython.site</a> <a href='mailto:k@irobotics.space'>k@irobotics.space</a> <a href='mailto:k@java.cam'>k@java.cam</a> <a href='mailto:k@javascript.mom'>k@javascript.mom</a> <a href='mailto:k@khalidshaikh.online'>k@khalidshaikh.online</a> <a href='mailto:k@kubernetes.website'>k@kubernetes.website</a> <a href='mailto:k@linuxkernel.bond'>k@linuxkernel.bond</a> <a href='mailto:k@neuralnetwork.bond'>k@neuralnetwork.bond</a> <a href='mailto:k@openshift.bond'>k@openshift.bond</a> <a href='mailto:k@ruby.run'>k@ruby.run</a> <a href='mailto:k@rubyinc.org'>k@rubyinc.org</a> <a href='mailto:k@rust.homes'>k@rust.homes</a> <a href='mailto:k@sql.mom'>k@sql.mom</a> <a href='mailto:k@typescript.bond'>k@typescript.bond</a>
+<p/>
+<a href='https://assembler.bond'>assembler.bond</a> <a href='https://awscloud.mom'>awscloud.mom</a> <a href='https://azure.boats'>azure.boats</a> <a href='https://cicd.lol'>cicd.lol</a> <a href='https://csharp.bond'>csharp.bond</a> <a href='https://devops.rest'>devops.rest</a> <a href='https://gcp.mom'>gcp.mom</a> <a href='https://golang.bond'>golang.bond</a> <a href='https://iai.lol'>iai.lol</a> <a href='https://ipython.site'>ipython.site</a> <a href='https://irobotics.space'>irobotics.space</a> <a href='https://java.cam'>java.cam</a> <a href='https://javascript.mom'>javascript.mom</a> <a href='http://khalidshaikh.online'>khalidshaikh.online</a> <a href='https://kubernetes.website'>kubernetes.website</a> <a href='https://linuxkernel.bond'>linuxkernel.bond</a> <a href='https://neuralnetwork.bond'>neuralnetwork.bond</a> <a href='https://openshift.bond'>openshift.bond</a> <a href='https://ruby.run'>ruby.run</a> <a href='https://rubyinc.org'>rubyinc.org</a> <a href='https://rust.homes'>rust.homes</a> <a href='https://sql.mom'>sql.mom</a> <a href='https://typescript.bond'>typescript.bond</a>

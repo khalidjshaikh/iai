@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mars & Earth Orbit</title>
+<style>
+  body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+c.width = c.height = 600;
+const cx = 300, cy = 300;
+
+let t = 0;
+
+function draw() {
+  ctx.clearRect(0, 0, 600, 600);
+
+  // Stars
+  ctx.fillStyle = '#000';
+  ctx.fillRect(0, 0, 600, 600);
+
+  // Sun
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+  ctx.fillStyle = '#FFD700';
+  ctx.fill();
+
+  // Earth orbit
+  ctx.beginPath();
+  ctx.arc(cx, cy, 120, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.stroke();
+
+  // Mars orbit
+  ctx.beginPath();
+  ctx.arc(cx, cy, 190, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Earth
+  const ex = cx + 120 * Math.cos(t);
+  const ey = cy + 120 * Math.sin(t);
+  ctx.beginPath();
+  ctx.arc(ex, ey, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#4FA3E0';
+  ctx.fill();
+
+  // Mars
+  const mx = cx + 190 * Math.cos(t * 0.531);
+  const my = cy + 190 * Math.sin(t * 0.531);
+  ctx.beginPath();
+  ctx.arc(mx, my, 6, 0, Math.PI * 2);
+  ctx.fillStyle = '#C1440E';
+  ctx.fill();
+
+  // Labels
+  ctx.fillStyle = '#fff';
+  ctx.font = '12px sans-serif';
+  ctx.fillText('Earth', ex + 10, ey);
+  ctx.fillText('Mars', mx + 8, my);
+
+  t += 0.01;
+  requestAnimationFrame(draw);
+}
+
+draw();
+</script>
+</body>
+</html>
