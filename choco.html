@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chocolatey Packages — Installed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #0e0e12;
+      color: #e1e1e6;
+      padding: 2rem 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .container { max-width: 900px; width: 100%; }
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      color: #88889a;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+      border-bottom: 1px solid #2a2a35;
+      padding-bottom: 1rem;
+    }
+    .card {
+      background: #18181f;
+      border: 1px solid #2a2a35;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead {
+      background: #1e1e27;
+    }
+    th {
+      text-align: left;
+      padding: 0.85rem 1.2rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: #6b6b80;
+    }
+    td {
+      padding: 0.75rem 1.2rem;
+      border-top: 1px solid #25252f;
+      font-size: 0.9rem;
+    }
+    td:first-child {
+      font-weight: 500;
+      color: #c7c7d6;
+    }
+    td:last-child {
+      color: #a0a0b6;
+      font-variant-numeric: tabular-nums;
+    }
+    .badge {
+      display: inline-block;
+      background: #2b2b3a;
+      color: #b0b0cc;
+      border-radius: 20px;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      margin-top: 1.5rem;
+    }
+    .footer {
+      margin-top: 1.5rem;
+      font-size: 0.8rem;
+      color: #555566;
+      text-align: center;
+    }
+    tr:hover td { background: #20202a; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>📦 Chocolatey Packages</h1>
+  <div class="subtitle">Installed packages — <span id="count"></span> total</div>
+
+  <div class="card">
+    <table>
+      <thead>
+        <tr>
+          <th>Package</th>
+          <th>Version</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Chocolatey</td><td>v2.7.3</td></tr>
+        <tr><td>This</td><td>is</td></tr>
+        <tr><td>This</td><td>is</td></tr>
+        <tr><td>Maximum</td><td>tries</td></tr>
+        <tr><td>7zip</td><td>26.1.0</td></tr>
+        <tr><td>7zip.install</td><td>26.1.0</td></tr>
+        <tr><td>ack</td><td>3.4.0</td></tr>
+        <tr><td>ag</td><td>2.2.5</td></tr>
+        <tr><td>azure-cli</td><td>2.87.0</td></tr>
+        <tr><td>chocolatey</td><td>2.7.3</td></tr>
+        <tr><td>chocolatey-compatibility.extension</td><td>1.0.0</td></tr>
+        <tr><td>chocolatey-core.extension</td><td>1.4.0</td></tr>
+        <tr><td>chocolatey-windowsupdate.extension</td><td>1.0.5</td></tr>
+        <tr><td>codex</td><td>0.142.0</td></tr>
+        <tr><td>gcloudsdk</td><td>573.0.0</td></tr>
+        <tr><td>gh</td><td>2.95.0</td></tr>
+        <tr><td>golang</td><td>1.26.4</td></tr>
+        <tr><td>istioctl</td><td>1.28.3</td></tr>
+        <tr><td>julia</td><td>1.12.0</td></tr>
+        <tr><td>k9s</td><td>0.51.0</td></tr>
+        <tr><td>KB2919355</td><td>1.0.20160915</td></tr>
+        <tr><td>KB2919442</td><td>1.0.20160915</td></tr>
+        <tr><td>KB2999226</td><td>1.0.20181019</td></tr>
+        <tr><td>KB3033929</td><td>1.0.5</td></tr>
+        <tr><td>KB3035131</td><td>1.0.3</td></tr>
+        <tr><td>kubernetes-cli</td><td>1.36.2</td></tr>
+        <tr><td>kubernetes-helm</td><td>4.1.4</td></tr>
+        <tr><td>lua</td><td>5.1.5.52</td></tr>
+        <tr><td>micro</td><td>2.0.11</td></tr>
+        <tr><td>microsoft-openjdk25</td><td>25.0.3</td></tr>
+        <tr><td>mingw</td><td>16.1.0</td></tr>
+        <tr><td>Minikube</td><td>1.38.1</td></tr>
+        <tr><td>openjdk17</td><td>17.0.2.20220913</td></tr>
+        <tr><td>pyenv-win</td><td>3.1.1</td></tr>
+        <tr><td>python314</td><td>3.14.6</td></tr>
+        <tr><td>ruby</td><td>3.4.9.1</td></tr>
+        <tr><td>ruby.install</td><td>3.4.9.1</td></tr>
+        <tr><td>rust</td><td>1.95.0</td></tr>
+        <tr><td>scala</td><td>3.8.4</td></tr>
+        <tr><td>SQLite</td><td>3.53.2</td></tr>
+        <tr><td>strawberryperl</td><td>5.42.2.1</td></tr>
+        <tr><td>tektoncd-cli</td><td>0.39.0</td></tr>
+        <tr><td>Temurin17</td><td>17.0.17.10</td></tr>
+        <tr><td>terraform</td><td>1.15.6</td></tr>
+        <tr><td>tgpt</td><td>2.11.1</td></tr>
+        <tr><td>vcredist140</td><td>14.51.36247</td></tr>
+        <tr><td>vcredist2005</td><td>8.0.50727.619501</td></tr>
+        <tr><td>vcredist2015</td><td>14.0.24215.20170201</td></tr>
+        <tr><td>vscode</td><td>1.125.0</td></tr>
+        <tr><td>vscode.install</td><td>1.125.0</td></tr>
+        <tr><td>46</td><td>packages</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="badge" id="count-badge"></div>
+  <div class="footer">Generated on 2026-07-02 from choco list</div>
+</div>
+
+<script>
+  const rows = document.querySelectorAll('tbody tr');
+  document.getElementById('count').textContent = rows.length;
+  document.getElementById('count-badge').textContent = rows.length + ' packages';
+</script>
+</body>
+</html>
