@@ -1,0 +1,3 @@
+.well-known/
+__pycache__/
+auth_logs/
