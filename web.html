@@ -1,0 +1,22 @@
+<script type="module">
+const response = await fetch("http://iai.lol:11434/api/chat", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json"
+  },
+  body: JSON.stringify({
+    model: "minimax-m3:cloud",
+    messages: [
+      {
+        role: "user",
+        content: "Hello!"
+      }
+    ],
+    stream: false
+  })
+});
+
+const data = await response.json();
+console.log(data.message.content);
+</script>
+

@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Translate — 249 Supported Languages (2026)</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: #f0f4f8;
+            color: #1a202c;
+            padding: 2rem 1rem;
+        }
+        .container { max-width: 1100px; margin: 0 auto; }
+        header {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        header h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: #1a73e8;
+            margin-bottom: 0.5rem;
+        }
+        header .subtitle {
+            font-size: 1.1rem;
+            color: #4a5568;
+        }
+        header .badge {
+            display: inline-block;
+            background: #1a73e8;
+            color: #fff;
+            padding: 0.4rem 1.2rem;
+            border-radius: 999px;
+            font-weight: 600;
+            font-size: 1rem;
+            margin-top: 0.8rem;
+        }
+        .stats {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            padding: 1rem 1.8rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+            text-align: center;
+            min-width: 140px;
+        }
+        .stat-card .num {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a73e8;
+        }
+        .stat-card .label {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 0.2rem;
+        }
+        .search-bar {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        .search-bar input {
+            width: 100%;
+            max-width: 500px;
+            padding: 0.75rem 1.2rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .search-bar input:focus {
+            border-color: #1a73e8;
+        }
+        .lang-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 0.6rem;
+        }
+        .lang-item {
+            background: #fff;
+            padding: 0.65rem 1rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.06);
+            font-size: 0.95rem;
+            transition: background 0.15s, box-shadow 0.15s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .lang-item .index {
+            color: #a0aec0;
+            font-size: 0.75rem;
+            min-width: 2rem;
+            text-align: right;
+            font-weight: 500;
+        }
+        .lang-item .name {
+            flex: 1;
+        }
+        .lang-item.highlight {
+            background: #e8f0fe;
+            box-shadow: 0 0 0 2px #1a73e8;
+        }
+        .lang-item.hidden { display: none; }
+        footer {
+            text-align: center;
+            margin-top: 3rem;
+            color: #a0aec0;
+            font-size: 0.85rem;
+        }
+        footer a { color: #1a73e8; text-decoration: none; }
+        @media (max-width: 640px) {
+            header h1 { font-size: 1.6rem; }
+            .lang-grid { grid-template-columns: 1fr; }
+            .stats { gap: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>🌐 Google Translate</h1>
+        <p class="subtitle">Supported languages as of <strong>July 2026</strong></p>
+        <div class="badge">249 languages &amp; language varieties</div>
+    </header>
+
+    <div class="stats">
+        <div class="stat-card">
+            <div class="num">249</div>
+            <div class="label">Total Supported</div>
+        </div>
+        <div class="stat-card">
+            <div class="num">240</div>
+            <div class="label">Unique Languages</div>
+        </div>
+        <div class="stat-card">
+            <div class="num">60,000+</div>
+            <div class="label">Translation Pairs</div>
+        </div>
+        <div class="stat-card">
+            <div class="num">95%</div>
+            <div class="label">Population Coverage</div>
+        </div>
+    </div>
+
+    <div class="search-bar">
+        <input type="text" id="search" placeholder="Search for a language..." oninput="filterLanguages()">
+    </div>
+
+    <div class="lang-grid" id="langGrid"></div>
+
+    <footer>
+        Data from <a href="https://en.wikipedia.org/wiki/Google_Translate#Supported_languages" target="_blank">Wikipedia</a>
+        &mdash; Updated July 2026
+    </footer>
+</div>
+
+<script>
+const languages = [
+    "Abkhaz", "Acehnese", "Acholi", "Afar", "Afrikaans",
+    "Albanian", "Alur", "Amharic", "Arabic", "Armenian",
+    "Assamese", "Avar", "Awadhi", "Aymara", "Azerbaijani",
+    "Balinese", "Baluchi", "Bambara", "Baoulé", "Bashkir",
+    "Basque", "Batak Karo", "Batak Simalungun", "Batak Toba", "Belarusian",
+    "Bemba", "Bengali", "Betawi", "Bhojpuri", "Bikol",
+    "Bosnian", "Breton", "Bulgarian", "Buryat", "Cantonese",
+    "Catalan", "Cebuano", "Chamorro", "Chechen", "Chichewa",
+    "Chinese (Simplified)", "Chinese (Traditional)", "Chuukese", "Chuvash", "Corsican",
+    "Crimean Tatar (Cyrillic)", "Crimean Tatar (Latin)", "Croatian", "Czech", "Danish",
+    "Dari", "Dhivehi", "Dinka", "Dogri", "Dombe",
+    "Dutch", "Dyula", "Dzongkha", "English", "Esperanto",
+    "Estonian", "Ewe", "Faroese", "Fijian", "Filipino",
+    "Finnish", "Fon", "French", "French (Canada)", "Frisian",
+    "Friulian", "Fulani", "Ga", "Galician", "Georgian",
+    "German", "Greek", "Guarani", "Gujarati", "Haitian Creole",
+    "Hakha Chin", "Hausa", "Hawaiian", "Hebrew", "Hiligaynon",
+    "Hindi", "Hmong", "Hungarian", "Hunsrik", "Iban",
+    "Icelandic", "Igbo", "Ilocano", "Indonesian", "Inuktut (Latin)",
+    "Inuktut (Syllabics)", "Irish", "Italian", "Jamaican Patois", "Japanese",
+    "Javanese", "Jingpo", "Kalaallisut", "Kannada", "Kanuri",
+    "Kapampangan", "Kazakh", "Khasi", "Khmer", "Kiga",
+    "Kikongo", "Kinyarwanda", "Kituba", "Kokborok", "Komi",
+    "Konkani", "Korean", "Krio", "Kurdish (Kurmanji)", "Kurdish (Sorani)",
+    "Kyrgyz", "Lao", "Latgalian", "Latin", "Latvian",
+    "Ligurian", "Limburgish", "Lingala", "Lithuanian", "Lombard",
+    "Luganda", "Luo", "Luxembourgish", "Macedonian", "Madurese",
+    "Maithili", "Makassar", "Malagasy", "Malay", "Malay (Jawi)",
+    "Malayalam", "Maltese", "Mam", "Manx", "Maori",
+    "Marathi", "Marshallese", "Marwadi", "Mauritian Creole", "Meadow Mari",
+    "Meiteilon (Manipuri)", "Minang", "Mizo", "Mongolian", "Myanmar (Burmese)",
+    "Nahuatl (Eastern Huasteca)", "Ndau", "Ndebele (South)", "Nepalbhasa (Newari)", "Nepali",
+    "NKo", "Norwegian (Bokmål)", "Nuer", "Occitan", "Odia (Oriya)",
+    "Oromo", "Ossetian", "Pangasinan", "Papiamento", "Pashto",
+    "Persian", "Polish", "Portuguese (Brazil)", "Portuguese (Portugal)", "Punjabi (Gurmukhi)",
+    "Punjabi (Shahmukhi)", "Quechua", "Qʼeqchiʼ", "Romani", "Romanian",
+    "Rundi", "Russian", "Sami (North)", "Samoan", "Sango",
+    "Sanskrit", "Santali (Latin)", "Santali (Ol Chiki)", "Scots Gaelic", "Sepedi",
+    "Serbian", "Sesotho", "Seychellois Creole", "Shan", "Shona",
+    "Sicilian", "Silesian", "Sindhi", "Sinhala", "Slovak",
+    "Slovenian", "Somali", "Spanish", "Sundanese", "Susu",
+    "Swahili", "Swati", "Swedish", "Tahitian", "Tajik",
+    "Tamazight", "Tamazight (Tifinagh)", "Tamil", "Tatar", "Telugu",
+    "Tetum", "Thai", "Tibetan", "Tigrinya", "Tiv",
+    "Tok Pisin", "Tongan", "Tshiluba", "Tsonga", "Tswana",
+    "Tulu", "Tumbuka", "Turkish", "Turkmen", "Tuvan",
+    "Twi", "Udmurt", "Ukrainian", "Urdu", "Uyghur",
+    "Uzbek", "Venda", "Venetian", "Vietnamese", "Waray",
+    "Welsh", "Wolof", "Xhosa", "Yakut", "Yiddish",
+    "Yoruba", "Yucatec Maya", "Zapotec", "Zulu"
+];
+
+const grid = document.getElementById('langGrid');
+let items = [];
+
+languages.forEach((name, i) => {
+    const div = document.createElement('div');
+    div.className = 'lang-item';
+    div.innerHTML = `<span class="index">${i + 1}</span><span class="name">${name}</span>`;
+    div.dataset.name = name.toLowerCase();
+    grid.appendChild(div);
+    items.push(div);
+});
+
+function filterLanguages() {
+    const q = document.getElementById('search').value.toLowerCase().trim();
+    items.forEach(el => {
+        if (!q || el.dataset.name.includes(q)) {
+            el.classList.remove('hidden');
+        } else {
+            el.classList.add('hidden');
+        }
+    });
+}
+</script>
+</body>
+</html>
