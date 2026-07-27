@@ -279,7 +279,7 @@
         messagesEl.appendChild(thinking);
 
         try {
-          const response = await fetch("http://iai.lol:11434/api/chat", {
+          const response = await fetch("https://iai.lol/api/chat", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
