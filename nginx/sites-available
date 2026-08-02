@@ -5,8 +5,8 @@ server {
 	# HTTP/3 (QUIC) and HTTPS (TLS)
 	listen 443 ssl default_server;
 	listen [::]:443 ssl default_server;
-    ssl_certificate /etc/letsencrypt/live/assembler.bond/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/assembler.bond/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/assembler.bond-0001/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/assembler.bond-0001/privkey.pem; # managed by Certbot
 	listen 443 quic reuseport default_server;
 	listen [::]:443 quic reuseport default_server;
 	ssl_protocols TLSv1.2 TLSv1.3;
@@ -25,5 +25,16 @@ server {
 		# First attempt to serve request as file, then
 		# as directory, then fall back to displaying a 404.
 		try_files $uri $uri/ =404;
+	}
+
+	# Proxy the Ollama API (frontend calls https://iai.lol/api/chat).
+	# Ollama handles CORS itself (Access-Control-Allow-Origin: *).
+	location /api/ {
+		proxy_pass http://127.0.0.1:11434;
+		proxy_http_version 1.1;
+		proxy_set_header Connection "";
+		proxy_set_header Host $host;
+		proxy_buffering off;
+		proxy_read_timeout 600s;
 	}
 }
