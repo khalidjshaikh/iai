@@ -1,0 +1,16 @@
+{
+  "name": "USDC",
+  "description": "USDC ERC20 Token on Ethereum",
+  "image": "http://iai.lol/usdc_512.png",
+  "attributes": [
+    {
+      "trait_type": "Total Supply",
+      "value": "10,000,000,000"
+    },
+    {
+      "trait_type": "Decimals",
+      "value": "18"
+    }
+  ]
+}
+

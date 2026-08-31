@@ -1,0 +1,11 @@
+{
+  "name": "Tether",
+  "symbol": "USDT",
+  "description": "Tether USD stablecoin on Solana",
+  "image": "https://cdn.jsdelivr.net/gh/homarr-labs/dashboard-icons/png/tether.png",
+  "attributes": [
+    { "trait_type": "Decimals", "value": 6 },
+    { "trait_type": "Total Supply", "value": "18000000000000" }
+  ]
+}
+
