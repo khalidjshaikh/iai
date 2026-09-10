@@ -1,3 +1,5 @@
 .well-known/
 __pycache__/
 auth_logs/
+tf/.terraform/
+tf/terraform.tfstate
