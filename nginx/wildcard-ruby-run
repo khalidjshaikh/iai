@@ -1,0 +1,51 @@
+# TLS for ruby.run
+# - Let's Encrypt cert (trusted) for the exact names:
+#   ruby.run, ai.ruby.run, www.ruby.run — exact SNI match wins below.
+# - Self-signed *.ruby.run fallback for any other subdomain.
+#   Replace with a real DNS-01 wildcard when a DNS provider API is available.
+server {
+	listen 443 ssl;
+	listen [::]:443 ssl;
+	listen 443 quic reuseport;
+	listen [::]:443 quic reuseport;
+
+	server_name ruby.run ai.ruby.run www.ruby.run;
+
+	ssl_certificate /etc/letsencrypt/live/ruby.run/fullchain.pem;
+	ssl_certificate_key /etc/letsencrypt/live/ruby.run/privkey.pem;
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_ciphers HIGH:!aNULL:!MD5;
+
+	# HTTP/3: advertise over TCP 443, serve over UDP 443.
+	http3 on;
+	add_header Alt-Svc 'h3=":443"; ma=86400' always;
+
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+}
+
+server {
+	listen 443 ssl;
+	listen [::]:443 ssl;
+	server_name *.ruby.run;
+
+	ssl_certificate /etc/nginx/ssl/wildcard.ruby.run/wildcard.ruby.run.crt;
+	ssl_certificate_key /etc/nginx/ssl/wildcard.ruby.run/wildcard.ruby.run.key;
+	ssl_protocols TLSv1.2 TLSv1.3;
+	ssl_ciphers HIGH:!aNULL:!MD5;
+
+	# HTTP/3: advertise over TCP 443, serve over UDP 443.
+	http3 on;
+	add_header Alt-Svc 'h3=":443"; ma=86400' always;
+
+	root /var/www/html;
+	index index.html index.htm index.nginx-debian.html;
+
+	location / {
+		try_files $uri $uri/ =404;
+	}
+}
