@@ -1,59 +1,82 @@
 # ---------------------------------------------------------------------------
-# Data sources (used only when NOT creating a custom VPC)
+# Default VPC
+#
+# IPv6 is enabled on the existing default VPC, on one of its existing subnets,
+# and on the instance. The subnet is adopted via the import block below so it
+# is never recreated, and `prevent_destroy` keeps it from being deleted.
 # ---------------------------------------------------------------------------
 
 data "aws_vpc" "default" {
-  count   = local.should_create_vpc ? 0 : 1
   default = true
 }
 
-data "aws_vpc" "selected" {
-  count = local.should_create_vpc ? 0 : 1
-  id    = var.vpc_id != "" ? var.vpc_id : data.aws_vpc.default[0].id
-
-  # When IPv6 is requested, only match a VPC that actually has IPv6 enabled.
-  dynamic "filter" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      name   = "ipv6-cidr-block-association.ipv6-cidr-block"
-      values = ["*"]
-    }
+data "aws_internet_gateway" "default" {
+  filter {
+    name   = "attachment.vpc-id"
+    values = [data.aws_vpc.default.id]
   }
 }
 
-data "aws_subnets" "selected" {
-  count = local.should_create_vpc ? 0 : 1
+# The default VPC's main route table, where the IPv6 default route is added.
+data "aws_route_table" "main" {
+  vpc_id = data.aws_vpc.default.id
+
+  filter {
+    name   = "association.main"
+    values = ["true"]
+  }
+}
+
+# Request an Amazon-provided IPv6 CIDR (/56) for the default VPC.
+#
+# This must not be gated on the VPC's live IPv6 associations: the association
+# created here is itself reported by data.aws_vpc.default, so the old
+# `existing_vpc_ipv6_cidr == null` condition became false on the very next
+# plan and forced Terraform to destroy/re-create the association. If the VPC
+# already carries a Terraform-unmanaged IPv6 CIDR, adopt it with an `import`
+# block instead of relying on a count condition here.
+resource "aws_vpc_ipv6_cidr_block_association" "this" {
+  count = var.enable_ipv6 ? 1 : 0
+
+  vpc_id                           = data.aws_vpc.default.id
+  assign_generated_ipv6_cidr_block = true
+}
+
+# Add the IPv6 default route (::/0) to the main route table so the instance's
+# IPv6 traffic egresses through the existing internet gateway.
+resource "aws_route" "ipv6_default" {
+  count = var.enable_ipv6 ? 1 : 0
+
+  route_table_id              = data.aws_route_table.main.id
+  destination_ipv6_cidr_block = "::/0"
+  gateway_id                  = data.aws_internet_gateway.default.id
+}
+
+data "aws_subnets" "default" {
+  filter {
+    name   = "vpc-id"
+    values = [data.aws_vpc.default.id]
+  }
+}
+
+# Subnets in the default VPC that already have an IPv6 CIDR, preferred when
+# IPv6 is requested so an existing IPv6 subnet is reused when possible.
+data "aws_subnets" "default_ipv6" {
+  count = var.enable_ipv6 ? 1 : 0
 
   filter {
     name   = "vpc-id"
-    values = [data.aws_vpc.selected[0].id]
+    values = [data.aws_vpc.default.id]
   }
 
   filter {
-    name   = "map-public-ip-on-launch"
-    values = [tostring(var.associate_public_ip)]
-  }
-
-  # When IPv6 is requested, only match subnets that have an IPv6 CIDR block
-  # associated, so the instance can actually get an IPv6 address.
-  dynamic "filter" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      name   = "ipv6-cidr-block-association.ipv6-cidr-block"
-      values = ["*"]
-    }
+    name   = "ipv6-cidr-block-association.ipv6-cidr-block"
+    values = ["*"]
   }
 }
 
 data "aws_subnet" "selected" {
-  count = local.should_create_vpc ? 0 : (var.subnet_id != "" ? 0 : 1)
-  id    = var.subnet_id != "" ? var.subnet_id : data.aws_subnets.selected[0].ids[0]
-}
-
-# Validates that an explicitly provided subnet supports IPv6 when IPv6 is enabled.
-data "aws_subnet" "ipv6_check" {
-  count = local.should_create_vpc ? 0 : (var.enable_ipv6 && var.subnet_id != "" ? 1 : 0)
-  id    = var.subnet_id
+  id = local.subnet_id
 }
 
 data "aws_ssm_parameter" "ubuntu_ami" {
@@ -62,87 +85,72 @@ data "aws_ssm_parameter" "ubuntu_ami" {
 }
 
 # ---------------------------------------------------------------------------
-# Custom VPC with IPv6 (used when create_vpc = true, typically for IPv6)
+# Manage the selected default subnet so it carries an IPv6 CIDR
+#
+# Provider v6 removed `aws_subnet_ipv6_cidr_block_association`; a subnet's
+# IPv6 CIDR is now set on the `aws_subnet` resource itself. The import block
+# adopts the existing default subnet rather than creating a new one.
 # ---------------------------------------------------------------------------
 
-resource "aws_vpc" "this" {
-  count = local.should_create_vpc ? 1 : 0
+resource "aws_subnet" "selected" {
+  vpc_id            = data.aws_vpc.default.id
+  cidr_block        = data.aws_subnet.selected.cidr_block
+  availability_zone = data.aws_subnet.selected.availability_zone
 
-  cidr_block           = var.vpc_cidr
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+  map_public_ip_on_launch         = data.aws_subnet.selected.map_public_ip_on_launch
+  assign_ipv6_address_on_creation = false
+  ipv6_cidr_block                 = local.subnet_ipv6_cidr
 
-  # Must stay true: the provider records this as true whenever the VPC has an
-  # Amazon-provided IPv6 CIDR (assigned by aws_vpc_ipv6_cidr_block_association
-  # below). Setting it to null would attempt to disassociate the CIDR and fail.
-  assign_generated_ipv6_cidr_block = true
-
-  tags = merge(var.tags, { Name = "${var.instance_name}-vpc" })
-}
-
-resource "aws_vpc_ipv6_cidr_block_association" "this" {
-  count = local.should_create_vpc ? 1 : 0
-
-  vpc_id                           = aws_vpc.this[0].id
-  assign_generated_ipv6_cidr_block = true
-}
-
-resource "aws_internet_gateway" "this" {
-  count = local.should_create_vpc ? 1 : 0
-
-  vpc_id = aws_vpc.this[0].id
-
-  tags = merge(var.tags, { Name = "${var.instance_name}-igw" })
-}
-
-resource "aws_subnet" "this" {
-  count = local.should_create_vpc ? 1 : 0
-
-  vpc_id                          = aws_vpc.this[0].id
-  cidr_block                      = var.subnet_cidr
-  availability_zone               = var.availability_zone
-  map_public_ip_on_launch         = var.associate_public_ip
-  assign_ipv6_address_on_creation = true
-  ipv6_cidr_block                 = cidrsubnet(aws_vpc_ipv6_cidr_block_association.this[0].ipv6_cidr_block, 8, 0)
-
-  tags = merge(var.tags, { Name = "${var.instance_name}-subnet" })
-}
-
-resource "aws_route_table" "this" {
-  count = local.should_create_vpc ? 1 : 0
-
-  vpc_id = aws_vpc.this[0].id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.this[0].id
+  lifecycle {
+    # The default subnet is shared infrastructure; never let `terraform
+    # destroy` delete it.
+    prevent_destroy = true
   }
-
-  route {
-    ipv6_cidr_block = "::/0"
-    gateway_id      = aws_internet_gateway.this[0].id
-  }
-
-  tags = merge(var.tags, { Name = "${var.instance_name}-rt" })
 }
 
-resource "aws_route_table_association" "this" {
-  count = local.should_create_vpc ? 1 : 0
-
-  subnet_id      = aws_subnet.this[0].id
-  route_table_id = aws_route_table.this[0].id
+import {
+  to = aws_subnet.selected
+  id = local.subnet_id
 }
 
 # ---------------------------------------------------------------------------
-# Locals — pick the right VPC / subnet / etc.
+# Locals
 # ---------------------------------------------------------------------------
 
 locals {
-  should_create_vpc  = var.enable_ipv6 && var.vpc_id == ""
-  vpc_id             = local.should_create_vpc ? aws_vpc.this[0].id : (var.vpc_id != "" ? var.vpc_id : data.aws_vpc.selected[0].id)
-  subnet_id          = local.should_create_vpc ? aws_subnet.this[0].id : (var.subnet_id != "" ? var.subnet_id : data.aws_subnet.selected[0].id)
-  ami_id             = var.ami != "" ? var.ami : data.aws_ssm_parameter.ubuntu_ami[0].value
-  ipv6_address_count = var.enable_ipv6 ? var.ipv6_address_count : 0
+  # Prefer an IPv6-capable default subnet when IPv6 is requested, otherwise
+  # fall back to the first default subnet.
+  subnet_id = var.subnet_id != "" ? var.subnet_id : (
+    var.enable_ipv6
+    ? try(data.aws_subnets.default_ipv6[0].ids[0], data.aws_subnets.default.ids[0])
+    : data.aws_subnets.default.ids[0]
+  )
+
+  ami_id = var.ami != "" ? var.ami : data.aws_ssm_parameter.ubuntu_ami[0].value
+
+  # IPv6 CIDR already on the default VPC (null when absent).
+  existing_vpc_ipv6_cidr = try(
+    [
+      for a in data.aws_vpc.default.ipv6_cidr_block_associations :
+      a.ipv6_cidr_block if a.state == "associated"
+    ][0],
+    null
+  )
+
+  # The VPC's IPv6 CIDR: the association managed here when IPv6 is enabled,
+  # otherwise any pre-existing association on the VPC.
+  vpc_ipv6_cidr = try(
+    aws_vpc_ipv6_cidr_block_association.this[0].ipv6_cidr_block,
+    local.existing_vpc_ipv6_cidr
+  )
+
+  # Keep an existing subnet IPv6 CIDR, otherwise carve a /64 out of the VPC's
+  # /56 when IPv6 is enabled.
+  subnet_ipv6_cidr = (
+    data.aws_subnet.selected.ipv6_cidr_block != ""
+    ? data.aws_subnet.selected.ipv6_cidr_block
+    : (var.enable_ipv6 && local.vpc_ipv6_cidr != null ? cidrsubnet(local.vpc_ipv6_cidr, 8, 0) : null)
+  )
 }
 
 # ---------------------------------------------------------------------------
@@ -157,26 +165,50 @@ resource "aws_key_pair" "this" {
 }
 
 # ---------------------------------------------------------------------------
-# Security group
+# Security group: 22, 80, 443 (IPv4 + IPv6)
 # ---------------------------------------------------------------------------
 
 resource "aws_security_group" "this" {
   name        = "${var.instance_name}-sg"
-  description = "SSH access"
-  vpc_id      = local.vpc_id
+  description = "Allow SSH, HTTP and HTTPS"
+  vpc_id      = data.aws_vpc.default.id
 
   ingress {
-    description = "SSH from allowed CIDRs"
+    description = "SSH (IPv4)"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = var.ingress_cidr_blocks
   }
 
+  ingress {
+    description = "HTTP (IPv4)"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = var.ingress_cidr_blocks
+  }
+
+  ingress {
+    description = "HTTPS (IPv4)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "tcp"
+    cidr_blocks = var.ingress_cidr_blocks
+  }
+
+  ingress {
+    description = "QUIC/UDP 443 (IPv4)"
+    from_port   = 443
+    to_port     = 443
+    protocol    = "udp"
+    cidr_blocks = var.ingress_cidr_blocks
+  }
+
   dynamic "ingress" {
     for_each = var.enable_ipv6 ? [1] : []
     content {
-      description      = "SSH from allowed IPv6 CIDRs"
+      description      = "SSH (IPv6)"
       from_port        = 22
       to_port          = 22
       protocol         = "tcp"
@@ -184,18 +216,10 @@ resource "aws_security_group" "this" {
     }
   }
 
-  ingress {
-    description = "HTTP from allowed CIDRs"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "tcp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
   dynamic "ingress" {
     for_each = var.enable_ipv6 ? [1] : []
     content {
-      description      = "HTTP from allowed IPv6 CIDRs"
+      description      = "HTTP (IPv6)"
       from_port        = 80
       to_port          = 80
       protocol         = "tcp"
@@ -203,18 +227,10 @@ resource "aws_security_group" "this" {
     }
   }
 
-  ingress {
-    description = "HTTPS from allowed CIDRs"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "tcp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
   dynamic "ingress" {
     for_each = var.enable_ipv6 ? [1] : []
     content {
-      description      = "HTTPS from allowed IPv6 CIDRs"
+      description      = "HTTPS (IPv6)"
       from_port        = 443
       to_port          = 443
       protocol         = "tcp"
@@ -222,122 +238,19 @@ resource "aws_security_group" "this" {
     }
   }
 
-  ingress {
-    description = "UDP/443 (QUIC) from allowed CIDRs"
-    from_port   = 443
-    to_port     = 443
-    protocol    = "udp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
   dynamic "ingress" {
     for_each = var.enable_ipv6 ? [1] : []
     content {
-      description      = "UDP/443 (QUIC) from allowed IPv6 CIDRs"
+      description      = "QUIC/UDP 443 (IPv6)"
       from_port        = 443
       to_port          = 443
       protocol         = "udp"
-      ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
-    }
-  }
-
-  ingress {
-    description = "UDP/80 (QUIC) from allowed CIDRs"
-    from_port   = 80
-    to_port     = 80
-    protocol    = "udp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
-  dynamic "ingress" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      description      = "UDP/80 (QUIC) from allowed IPv6 CIDRs"
-      from_port        = 80
-      to_port          = 80
-      protocol         = "udp"
-      ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
-    }
-  }
-
-  ingress {
-    description = "rsync from allowed CIDRs"
-    from_port   = 873
-    to_port     = 873
-    protocol    = "tcp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
-  dynamic "ingress" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      description      = "rsync from allowed IPv6 CIDRs"
-      from_port        = 873
-      to_port          = 873
-      protocol         = "tcp"
-      ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
-    }
-  }
-
-  ingress {
-    description = "Ollama API from allowed CIDRs"
-    from_port   = 11434
-    to_port     = 11434
-    protocol    = "tcp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
-  dynamic "ingress" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      description      = "Ollama API from allowed IPv6 CIDRs"
-      from_port        = 11434
-      to_port          = 11434
-      protocol         = "tcp"
-      ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
-    }
-  }
-
-  ingress {
-    description = "UDP/11434 (Ollama API) from allowed CIDRs"
-    from_port   = 11434
-    to_port     = 11434
-    protocol    = "udp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
-  dynamic "ingress" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      description      = "UDP/11434 (Ollama API) from allowed IPv6 CIDRs"
-      from_port        = 11434
-      to_port          = 11434
-      protocol         = "udp"
-      ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
-    }
-  }
-
-  ingress {
-    description = "ICMP (ping) from allowed CIDRs"
-    from_port   = 8
-    to_port     = 0
-    protocol    = "icmp"
-    cidr_blocks = var.ingress_cidr_blocks
-  }
-
-  dynamic "ingress" {
-    for_each = var.enable_ipv6 ? [1] : []
-    content {
-      description      = "ICMPv6 (ping) from allowed IPv6 CIDRs"
-      from_port        = -1
-      to_port          = -1
-      protocol         = "icmpv6"
       ipv6_cidr_blocks = var.ingress_ipv6_cidr_blocks
     }
   }
 
   egress {
-    description = "All outbound traffic"
+    description = "All outbound IPv4"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -347,7 +260,7 @@ resource "aws_security_group" "this" {
   dynamic "egress" {
     for_each = var.enable_ipv6 ? [1] : []
     content {
-      description      = "All outbound IPv6 traffic"
+      description      = "All outbound IPv6"
       from_port        = 0
       to_port          = 0
       protocol         = "-1"
@@ -359,15 +272,15 @@ resource "aws_security_group" "this" {
 }
 
 # ---------------------------------------------------------------------------
-# EC2 instance
+# EC2 instance (in the default VPC, dual-stack)
 # ---------------------------------------------------------------------------
 
 resource "aws_instance" "this" {
   ami                         = local.ami_id
   instance_type               = var.instance_type
-  subnet_id                   = local.subnet_id
+  subnet_id                   = aws_subnet.selected.id
   associate_public_ip_address = var.associate_public_ip
-  ipv6_address_count          = local.ipv6_address_count
+  ipv6_address_count          = var.enable_ipv6 ? var.ipv6_address_count : 0
   key_name                    = aws_key_pair.this.key_name
   vpc_security_group_ids      = [aws_security_group.this.id]
 
@@ -380,21 +293,4 @@ resource "aws_instance" "this" {
   }
 
   tags = merge(var.tags, { Name = var.instance_name })
-
-  lifecycle {
-    precondition {
-      condition     = !var.enable_ipv6 || var.subnet_id == "" || length(data.aws_subnet.ipv6_check[0].ipv6_cidr_block) > 0
-      error_message = "Subnet '${var.subnet_id}' has no IPv6 CIDR block; associate one (and enable IPv6 on its VPC) before setting enable_ipv6 = true, or leave subnet_id empty to auto-select an IPv6-capable subnet."
-    }
-  }
 }
-
-# ---------------------------------------------------------------------------
-# Optional: Elastic IP (uncomment to get a static public IP)
-# ---------------------------------------------------------------------------
-
-# resource "aws_eip" "this" {
-#   domain   = "vpc"
-#   instance = aws_instance.this.id
-#   tags     = merge(var.tags, { Name = "${var.instance_name}-eip" })
-# }

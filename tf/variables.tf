@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "instance_name" {
   description = "Name tag for the EC2 instance"
   type        = string
-  default     = "tf-ec2-vm"
+  default     = "tf2-ec2-vm"
 }
 
 variable "instance_type" {
@@ -18,47 +18,37 @@ variable "instance_type" {
 
 variable "ami" {
   description = <<-EOT
-    AMI ID to use. If left empty, resolves dynamically via SSM to the latest
-    Ubuntu Server 26.04 LTS (Resolute Raccoon) AMI for the configured region.
+    AMI ID to use. Defaults to a pinned Ubuntu Server 26.04 LTS AMI
+    (ami-09b09d2491cd88154, us-east-1) so plans are reproducible and do not
+    force instance replacement when Canonical publishes a new image. Pinned
+    AMIs are region-specific. Set to "" to resolve the latest via SSM instead.
   EOT
   type        = string
-  default     = ""
+  default     = "ami-09b09d2491cd88154"
 }
 
 variable "ubuntu_release" {
-  description = "Ubuntu release version for dynamic AMI lookup (used only when var.ami is empty)"
+  description = "Ubuntu release version for the dynamic AMI lookup (used only when var.ami is empty)"
   type        = string
   default     = "26.04"
 }
 
 variable "ssh_public_key_path" {
-  description = "Path to the SSH public key to inject into the instance (absolute path, no ~)"
+  description = "Path to the SSH public key injected into the instance (absolute path, no ~)"
   type        = string
   default     = "/Users/kshaikh/.ssh/id_ed25519.pub"
 }
 
-variable "vpc_id" {
-  description = "VPC ID to deploy into. Ignored when enable_ipv6 is true (creates a new VPC)."
-  type        = string
-  default     = ""
-}
-
 variable "subnet_id" {
-  description = "Subnet ID to launch the instance into. Ignored when enable_ipv6 is true."
+  description = "Subnet in the default VPC to launch into. Empty = first subnet found."
   type        = string
   default     = ""
 }
 
 variable "associate_public_ip" {
-  description = "Whether to assign a public IP to the instance"
+  description = "Whether to associate a public IPv4 address with the instance"
   type        = bool
   default     = true
-}
-
-variable "ingress_cidr_blocks" {
-  description = "IPv4 CIDR blocks allowed for SSH ingress"
-  type        = list(string)
-  default     = ["0.0.0.0/0"]
 }
 
 variable "root_volume_size_gb" {
@@ -72,7 +62,7 @@ variable "tags" {
   type        = map(string)
   default = {
     ManagedBy = "Terraform"
-    Project   = "tf-ec2-vm"
+    Project   = "tf2-default-vpc-ipv6"
   }
 }
 
@@ -81,7 +71,7 @@ variable "tags" {
 # ---------------------------------------------------------------------------
 
 variable "enable_ipv6" {
-  description = "Enable IPv6. When true and vpc_id is empty, creates a new VPC with IPv6."
+  description = "Enable IPv6 on the default VPC, the selected subnet and the instance"
   type        = bool
   default     = true
 }
@@ -92,26 +82,18 @@ variable "ipv6_address_count" {
   default     = 1
 }
 
+# ---------------------------------------------------------------------------
+# Networking / ingress
+# ---------------------------------------------------------------------------
+
+variable "ingress_cidr_blocks" {
+  description = "IPv4 CIDR blocks allowed for SSH/HTTP/HTTPS ingress"
+  type        = list(string)
+  default     = ["0.0.0.0/0"]
+}
+
 variable "ingress_ipv6_cidr_blocks" {
-  description = "IPv6 CIDR blocks allowed for SSH ingress"
+  description = "IPv6 CIDR blocks allowed for SSH/HTTP/HTTPS ingress"
   type        = list(string)
   default     = ["::/0"]
-}
-
-variable "vpc_cidr" {
-  description = "CIDR block for the custom VPC (used when create_vpc = true)"
-  type        = string
-  default     = "10.0.0.0/16"
-}
-
-variable "subnet_cidr" {
-  description = "CIDR block for the custom subnet (used when create_vpc = true)"
-  type        = string
-  default     = "10.0.1.0/24"
-}
-
-variable "availability_zone" {
-  description = "Availability zone for the custom subnet (used when create_vpc = true)"
-  type        = string
-  default     = "us-east-1a"
 }

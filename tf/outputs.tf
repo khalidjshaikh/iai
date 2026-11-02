@@ -28,6 +28,26 @@ output "instance_public_dns" {
   value       = aws_instance.this.public_dns
 }
 
+output "vpc_id" {
+  description = "Default VPC ID"
+  value       = data.aws_vpc.default.id
+}
+
+output "vpc_ipv6_cidr_block" {
+  description = "IPv6 CIDR block associated with the default VPC"
+  value       = local.vpc_ipv6_cidr
+}
+
+output "subnet_id" {
+  description = "Subnet used for the instance"
+  value       = aws_subnet.selected.id
+}
+
+output "subnet_ipv6_cidr_block" {
+  description = "IPv6 CIDR block associated with the subnet"
+  value       = aws_subnet.selected.ipv6_cidr_block
+}
+
 output "security_group_id" {
   description = "Security group ID attached to the instance"
   value       = aws_security_group.this.id
